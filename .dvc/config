@@ -1,0 +1,4 @@
+[core]
+    remote = storage
+['remote "storage"']
+    url = C:\D drive\UIU - Documents\8th Trimester Summer 26\DS 4491 (BA)  Machine Learning Systems Design\dvc_remote
