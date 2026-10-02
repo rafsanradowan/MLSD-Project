@@ -1,0 +1,7 @@
+{
+  "train_seconds": 17.4,
+  "cv_score": 0.7055112230740948,
+  "best_params": {
+    "clf__C": 0.001
+  }
+}

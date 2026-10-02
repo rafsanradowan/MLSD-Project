@@ -1,0 +1,222 @@
+schema: '2.0'
+stages:
+  prepare:
+    cmd: python src/prepare.py
+    deps:
+    - path: data/raw
+      hash: md5
+      md5: 5aa011b02c76593b843044956c02c3fe.dir
+      size: 32508536
+      nfiles: 13
+    - path: src/common.py
+      hash: md5
+      md5: 4986dd72bd63f1afe7fbe80e5f956052
+      size: 3828
+    - path: src/prepare.py
+      hash: md5
+      md5: 776c405ab15cfd0c2ebce05dd3cac1b6
+      size: 3458
+    params:
+      params.yaml:
+        data.horizon_hours: 24
+        data.max_ffill_hours: 3
+        data.pm25_threshold: 75
+    outs:
+    - path: data/interim/clean.parquet
+      hash: md5
+      md5: d45aa4b160f8301e7cce5ac5ff98c2b2
+      size: 6069143
+  build_features:
+    cmd: python src/build_features.py
+    deps:
+    - path: data/interim/clean.parquet
+      hash: md5
+      md5: d45aa4b160f8301e7cce5ac5ff98c2b2
+      size: 6069143
+    - path: src/build_features.py
+      hash: md5
+      md5: 99e3992847b9c36dceb9c34cbbbd7368
+      size: 3036
+    - path: src/common.py
+      hash: md5
+      md5: 4986dd72bd63f1afe7fbe80e5f956052
+      size: 3828
+    params:
+      params.yaml:
+        features.windows_hours:
+        - 6
+        - 24
+    outs:
+    - path: data/processed/entity_df.parquet
+      hash: md5
+      md5: 72c11c6cb4bb49e9b1c2b7983fd98526
+      size: 411468
+    - path: feature_repo/data/station_pollution.parquet
+      hash: md5
+      md5: 5d058ce34833d807e8513839a43e0a02
+      size: 6297461
+    - path: feature_repo/data/station_weather.parquet
+      hash: md5
+      md5: c407f0cf96849d53123004ad75b3c041
+      size: 5166053
+  build_training_set:
+    cmd: python src/build_training_set.py
+    deps:
+    - path: data/processed/entity_df.parquet
+      hash: md5
+      md5: 72c11c6cb4bb49e9b1c2b7983fd98526
+      size: 411468
+    - path: feature_repo/data/station_pollution.parquet
+      hash: md5
+      md5: 5d058ce34833d807e8513839a43e0a02
+      size: 6297461
+    - path: feature_repo/data/station_weather.parquet
+      hash: md5
+      md5: c407f0cf96849d53123004ad75b3c041
+      size: 5166053
+    - path: src/build_training_set.py
+      hash: md5
+      md5: 21ec8f876a906025b8beda1479903e94
+      size: 816
+    - path: src/common.py
+      hash: md5
+      md5: 4986dd72bd63f1afe7fbe80e5f956052
+      size: 3828
+    outs:
+    - path: data/processed/dataset.parquet
+      hash: md5
+      md5: e1cbbddd60f1279511b0ca230dde665b
+      size: 9513438
+  split:
+    cmd: python src/split.py
+    deps:
+    - path: data/processed/dataset.parquet
+      hash: md5
+      md5: e1cbbddd60f1279511b0ca230dde665b
+      size: 9513438
+    - path: src/common.py
+      hash: md5
+      md5: 4986dd72bd63f1afe7fbe80e5f956052
+      size: 3828
+    - path: src/split.py
+      hash: md5
+      md5: 82f61d544dade10450710161c7cd237a
+      size: 1249
+    params:
+      params.yaml:
+        data.horizon_hours: 24
+        split.cutoff_date: '2016-03-01'
+    outs:
+    - path: data/processed/test.parquet
+      hash: md5
+      md5: efb0dab68fe8bf3bfdfb1f6c8ee3a0fb
+      size: 2334229
+    - path: data/processed/train.parquet
+      hash: md5
+      md5: 97cfa1e8a4b548898862d0eebf9ae9d2
+      size: 7114718
+  train_fast:
+    cmd: python src/train_fast.py
+    deps:
+    - path: data/processed/train.parquet
+      hash: md5
+      md5: 97cfa1e8a4b548898862d0eebf9ae9d2
+      size: 7114718
+    - path: src/common.py
+      hash: md5
+      md5: 4986dd72bd63f1afe7fbe80e5f956052
+      size: 3828
+    - path: src/train_fast.py
+      hash: md5
+      md5: 81594052cee0025a1e65b7362231c304
+      size: 1935
+    params:
+      params.yaml:
+        fast_model.c_grid:
+        - 0.001
+        - 0.003
+        - 0.01
+        - 0.03
+        - 0.1
+        - 0.3
+        - 1
+        - 3
+        - 10
+        - 30
+        fast_model.class_weight:
+        fast_model.cv_folds: 5
+    outs:
+    - path: metrics/train_fast.json
+      hash: md5
+      md5: 8cecd4e93709ea341c108657dfe6c6e0
+      size: 111
+    - path: models/fast.joblib
+      hash: md5
+      md5: e335b0c473474e3d3b45ead89b4c7e4b
+      size: 3310
+  train_slow:
+    cmd: python src/train_slow.py
+    deps:
+    - path: data/processed/train.parquet
+      hash: md5
+      md5: 97cfa1e8a4b548898862d0eebf9ae9d2
+      size: 7114718
+    - path: src/common.py
+      hash: md5
+      md5: 4986dd72bd63f1afe7fbe80e5f956052
+      size: 3828
+    - path: src/train_slow.py
+      hash: md5
+      md5: 32f2d00294339523059fe9c89fc305b0
+      size: 2592
+    params:
+      params.yaml:
+        seed: 42
+        slow_model.cv_folds: 3
+        slow_model.max_estimators: 400
+        slow_model.n_iter: 2
+    outs:
+    - path: metrics/train_slow.json
+      hash: md5
+      md5: 0a77803cf86eb7fcba64c1aaf3372eca
+      size: 394
+    - path: models/slow.joblib
+      hash: md5
+      md5: f3ac318404f5904eaa423ffa979798d1
+      size: 742913
+  evaluate:
+    cmd: python src/evaluate.py
+    deps:
+    - path: data/processed/test.parquet
+      hash: md5
+      md5: efb0dab68fe8bf3bfdfb1f6c8ee3a0fb
+      size: 2334229
+    - path: data/processed/train.parquet
+      hash: md5
+      md5: 97cfa1e8a4b548898862d0eebf9ae9d2
+      size: 7114718
+    - path: models/fast.joblib
+      hash: md5
+      md5: e335b0c473474e3d3b45ead89b4c7e4b
+      size: 3310
+    - path: models/slow.joblib
+      hash: md5
+      md5: f3ac318404f5904eaa423ffa979798d1
+      size: 742913
+    - path: src/common.py
+      hash: md5
+      md5: 4986dd72bd63f1afe7fbe80e5f956052
+      size: 3828
+    - path: src/evaluate.py
+      hash: md5
+      md5: 1715bf1bd8af4442869fb8fdb7e07123
+      size: 2553
+    params:
+      params.yaml:
+        data.pm25_threshold: 75
+        evaluate.threshold: 0.5
+    outs:
+    - path: reports/evaluation.json
+      hash: md5
+      md5: 3c557a825e45b8e11e738b26fd3c0ca8
+      size: 627

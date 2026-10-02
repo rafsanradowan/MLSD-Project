@@ -1,0 +1,15 @@
+{
+  "train_seconds": 6.7,
+  "cv_score": 0.6915679801499387,
+  "best_params": {
+    "colsample_bytree": 0.6571467271687763,
+    "learning_rate": 0.08951966918518126,
+    "max_depth": 7,
+    "min_child_samples": 21,
+    "n_estimators": 393,
+    "num_leaves": 16,
+    "reg_alpha": 0.005337032762603957,
+    "reg_lambda": 0.00541524411940254,
+    "subsample": 0.7216968971838151
+  }
+}
