@@ -1,0 +1,12 @@
+# Python / tools
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# scratch folder for temporary copies (never commit)
+tmp/
+
+# NOTE: do NOT add data/, models/ or feature_repo/data/ here.
+# DVC creates its own .gitignore files for the files it tracks.

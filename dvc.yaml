@@ -1,0 +1,101 @@
+# The pipeline. Each stage says: command (cmd), what it reads (deps, params), what it writes (outs).
+# DVC re-runs a stage only when one of its deps, params or its command changed.
+stages:
+  prepare:
+    cmd: python src/prepare.py
+    deps:
+      - data/raw
+      - src/prepare.py
+      - src/common.py
+    params:
+      - data.pm25_threshold
+      - data.horizon_hours
+      - data.max_ffill_hours
+    outs:
+      - data/interim/clean.parquet
+
+  build_features:
+    cmd: python src/build_features.py
+    deps:
+      - data/interim/clean.parquet
+      - src/build_features.py
+      - src/common.py
+    params:
+      - features.windows_hours
+    outs:
+      - feature_repo/data/station_pollution.parquet
+      - feature_repo/data/station_weather.parquet
+      - data/processed/entity_df.parquet
+
+  build_training_set:
+    cmd: python src/build_training_set.py
+    deps:
+      - data/processed/entity_df.parquet
+      - feature_repo/data/station_pollution.parquet
+      - feature_repo/data/station_weather.parquet
+      - src/build_training_set.py
+      - src/common.py
+    outs:
+      - data/processed/dataset.parquet
+
+  split:
+    cmd: python src/split.py
+    deps:
+      - data/processed/dataset.parquet
+      - src/split.py
+      - src/common.py
+    params:
+      - split.cutoff_date
+      - data.horizon_hours
+    outs:
+      - data/processed/train.parquet
+      - data/processed/test.parquet
+
+  train_fast:
+    cmd: python src/train_fast.py
+    deps:
+      - data/processed/train.parquet
+      - src/train_fast.py
+      - src/common.py
+    params:
+      - fast_model.c_grid
+      - fast_model.cv_folds
+      - fast_model.class_weight
+    outs:
+      - models/fast.joblib
+    metrics:
+      - metrics/train_fast.json:
+          cache: false
+
+  train_slow:
+    cmd: python src/train_slow.py
+    deps:
+      - data/processed/train.parquet
+      - src/train_slow.py
+      - src/common.py
+    params:
+      - seed
+      - slow_model.n_iter
+      - slow_model.cv_folds
+      - slow_model.max_estimators
+    outs:
+      - models/slow.joblib
+    metrics:
+      - metrics/train_slow.json:
+          cache: false
+
+  evaluate:
+    cmd: python src/evaluate.py
+    deps:
+      - data/processed/train.parquet
+      - data/processed/test.parquet
+      - models/fast.joblib
+      - models/slow.joblib
+      - src/evaluate.py
+      - src/common.py
+    params:
+      - data.pm25_threshold
+      - evaluate.threshold
+    metrics:
+      - reports/evaluation.json:
+          cache: false
